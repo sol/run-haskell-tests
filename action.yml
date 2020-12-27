@@ -6,6 +6,12 @@ branding:
   icon: check-square
   color: green
 
+inputs:
+  caching:
+    description: Cache dependencies
+    required: false
+    default: false
+
 runs:
   using: composite
   steps:
@@ -13,12 +19,38 @@ runs:
       run: cabal update
 
     - shell: bash
-      run: cabal configure --enable-tests --enable-benchmarks # NOTE: --enable-tests is necessary due to https://github.com/haskell/cabal/issues/5079
+      run: cabal configure --enable-tests --enable-benchmarks
+
+    - shell: bash
+      run: cabal build all --dry-run
+      if: inputs.caching == 'true'
+
+    - shell: bash
+      run: echo "version=`ghc --numeric-version`" >> $GITHUB_OUTPUT
+      id: ghc
+      if: inputs.caching == 'true'
+
+    - uses: actions/cache/restore@v3
+      id: cache
+      env:
+        key: ${{ runner.os }}-ghc-${{ steps.ghc.outputs.version }}
+      with:
+        path: ${{ runner.os == 'Windows' && 'C:/cabal/store/' || runner.os == 'macOS' && '~/.cabal/store/' || '~/.local/state/cabal/store/' }}
+        key: ${{ env.key }}-${{ hashFiles('dist-newstyle/cache/plan.json') }}
+        restore-keys: ${{ env.key }}-
+      if: inputs.caching == 'true'
+
+    - shell: bash
+      run: cabal build all --only-dependencies
+      if: inputs.caching == 'true'
+
+    - uses: actions/cache/save@v3
+      with:
+        path: ${{ runner.os == 'Windows' && 'C:/cabal/store/' || runner.os == 'macOS' && '~/.cabal/store/' || '~/.local/state/cabal/store/' }}
+        key: ${{ steps.cache.outputs.cache-primary-key }}
+      if: inputs.caching == 'true' && steps.cache.outputs.cache-hit != 'true'
 
     - shell: bash
       run: cabal build all
-
     - shell: bash
       run: cabal test all --test-show-details=direct
-      env:
-        HSPEC_OPTIONS: --color
