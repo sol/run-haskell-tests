@@ -30,12 +30,17 @@ runs:
       id: ghc
       if: inputs.caching == 'true'
 
+    - shell: bash
+      run: echo "store-dir=`cabal -v0 path --store-dir`" >> $GITHUB_OUTPUT
+      id: cabal-path
+      if: inputs.caching == 'true'
+
     - uses: actions/cache/restore@v3
       id: cache
       env:
         key: ${{ runner.os }}-ghc-${{ steps.ghc.outputs.version }}
       with:
-        path: ${{ runner.os == 'Windows' && 'C:/cabal/store/' || runner.os == 'macOS' && '~/.cabal/store/' || '~/.local/state/cabal/store/' }}
+        path: ${{ steps.cabal-path.outputs.store-dir }}
         key: ${{ env.key }}-${{ hashFiles('dist-newstyle/cache/plan.json') }}
         restore-keys: ${{ env.key }}-
       if: inputs.caching == 'true'
@@ -46,7 +51,7 @@ runs:
 
     - uses: actions/cache/save@v3
       with:
-        path: ${{ runner.os == 'Windows' && 'C:/cabal/store/' || runner.os == 'macOS' && '~/.cabal/store/' || '~/.local/state/cabal/store/' }}
+        path: ${{ steps.cabal-path.outputs.store-dir }}
         key: ${{ steps.cache.outputs.cache-primary-key }}
       if: inputs.caching == 'true' && steps.cache.outputs.cache-hit != 'true'
 
