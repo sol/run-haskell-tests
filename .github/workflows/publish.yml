@@ -9,5 +9,5 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - run: git tag v1 && git tag v1.1 && git push --tags -f
+      - uses: actions/checkout@v4
+      - run: git tag v2 && git tag v2.0 && git push --tags -f
