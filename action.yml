@@ -63,7 +63,7 @@ runs:
       run: cabal build all
 
     - shell: bash
-      run: echo "MY_ENV_VAR=myValue" >> $GITHUB_ENV
+      run: echo "HSPEC_STRICT=yes" >> $GITHUB_ENV
       if: inputs.strict == 'true'
     - shell: bash
       run: cabal test all --test-show-details=direct
