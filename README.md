@@ -21,6 +21,6 @@ jobs:
           - windows-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: sol/run-haskell-tests@v1
+      - uses: actions/checkout@v4
+      - uses: sol/run-haskell-tests@v2
 ```
