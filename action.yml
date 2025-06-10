@@ -11,6 +11,10 @@ inputs:
     description: Cache dependencies
     required: false
     default: false
+  strict:
+    description: Run with --strict
+    required: false
+    default: false
 
 runs:
   using: composite
@@ -57,5 +61,9 @@ runs:
 
     - shell: bash
       run: cabal build all
+
+    - shell: bash
+      run: echo "HSPEC_STRICT=yes" >> $GITHUB_ENV
+      if: inputs.strict == 'true'
     - shell: bash
       run: cabal test all --test-show-details=direct
