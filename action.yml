@@ -7,10 +7,16 @@ branding:
   color: green
 
 inputs:
+  ghc:
+    description: GHC binary
+    required: false
+    default: ghc
+
   caching:
     description: Cache dependencies
     required: false
     default: false
+
   strict:
     description: Run with --strict
     required: false
@@ -26,11 +32,11 @@ runs:
       run: "[ -f cabal.project ] || cabal configure --enable-tests --enable-benchmarks"
 
     - shell: bash
-      run: cabal build all --dry-run
+      run: cabal build all --dry-run -w ${{ inputs.ghc }}
       if: inputs.caching == 'true'
 
     - shell: bash
-      run: echo "version=`ghc --numeric-version`" >> $GITHUB_OUTPUT
+      run: echo "version=`${{ inputs.ghc }} --numeric-version`" >> $GITHUB_OUTPUT
       id: ghc
       if: inputs.caching == 'true'
 
@@ -44,26 +50,26 @@ runs:
       env:
         key: ${{ runner.os }}-ghc-${{ steps.ghc.outputs.version }}
       with:
-        path: ${{ steps.cabal-path.outputs.store-dir }}
+        path: ${{ steps.cabal-path.outputs.store-dir }}/ghc-${{ steps.ghc.outputs.version }}*
         key: ${{ env.key }}-${{ hashFiles('dist-newstyle/cache/plan.json') }}
         restore-keys: ${{ env.key }}-
       if: inputs.caching == 'true'
 
     - shell: bash
-      run: cabal build all --only-dependencies
+      run: cabal build all --only-dependencies -w ${{ inputs.ghc }}
       if: inputs.caching == 'true'
 
     - uses: actions/cache/save@v3
       with:
-        path: ${{ steps.cabal-path.outputs.store-dir }}
+        path: ${{ steps.cabal-path.outputs.store-dir }}/ghc-${{ steps.ghc.outputs.version }}*
         key: ${{ steps.cache.outputs.cache-primary-key }}
       if: inputs.caching == 'true' && steps.cache.outputs.cache-hit != 'true'
 
     - shell: bash
-      run: cabal build all
+      run: cabal build all -w ${{ inputs.ghc }}
 
     - shell: bash
       run: echo "HSPEC_STRICT=yes" >> $GITHUB_ENV
       if: inputs.strict == 'true'
     - shell: bash
-      run: cabal test all --test-show-details=direct
+      run: cabal test all --test-show-details=direct -w ${{ inputs.ghc }}
