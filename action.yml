@@ -26,7 +26,7 @@ runs:
       run: "[ -f cabal.project ] || cabal configure --enable-tests --enable-benchmarks"
 
     - shell: bash
-      run: cabal build all --dry-run
+      run: cabal build all --dry-run -v0
       if: inputs.caching == 'true'
 
     - shell: bash
